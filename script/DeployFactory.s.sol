@@ -11,26 +11,30 @@ contract DeployFactory is Script {
     function setUp() public {}
 
     function run() public {
-        // Get the deployer's private key from environment
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        address deployer = vm.addr(deployerPrivateKey);
-        
         // Get USDC address from environment (or use default for Sepolia)
         address usdcAddress = vm.envOr("USDC_ADDRESS", address(0xAF33ADd7918F685B2A82C1077bd8c07d220FFA04));
         
+        console.log("=================================");
         console.log("Deploying TicketFactory...");
-        console.log("Deployer:", deployer);
         console.log("USDC Address:", usdcAddress);
+        console.log("=================================");
         
-        vm.startBroadcast(deployerPrivateKey);
+        // Start broadcast - will use --account flag or PRIVATE_KEY env var
+        vm.startBroadcast();
 
-        // Deploy Factory with deployer as initial owner
-        factory = new TicketFactory(deployer, usdcAddress);
+        // Deploy Factory with msg.sender as initial owner
+        factory = new TicketFactory(msg.sender, usdcAddress);
 
         vm.stopBroadcast();
         
-        console.log("TicketFactory deployed at:", address(factory));
+        console.log("");
+        console.log("=================================");
+        console.log("Deployment Successful!");
+        console.log("=================================");
+        console.log("TicketFactory:", address(factory));
         console.log("Owner:", factory.owner());
         console.log("USDC:", address(factory.USDC()));
+        console.log("Transaction Counter:", factory.transactionCounter());
+        console.log("=================================");
     }
 }
