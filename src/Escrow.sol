@@ -27,7 +27,7 @@ contract Escrow {
 
     // Move these to factory Contract, will make getting data easier.
     event BuyerAdded(uint256 indexed transactionId);
-    event TxConfirmed(uint256 indexed transactionId, address indexed  buyer,  address indexed seller);
+    event TxConfirmed(uint256 indexed transactionId,  address indexed confirmee);
     event DisputeOpened(uint256 indexed transactionId, address party);
     event DisputeResolved(uint256 indexed transactionId, address winner);
 
@@ -70,9 +70,9 @@ contract Escrow {
     }
 
 
-    function PartyConfirmation() external requireOpen OnlyFactory {
+    function PartyConfirmation(address confirmee) external requireOpen OnlyFactory {
         confirmations++;
-        emit TxConfirmed(transactionId, buyer, seller);
+        emit TxConfirmed(transactionId, confirmee);
         
         if (confirmations >= 2) {
             _releaseFunds();

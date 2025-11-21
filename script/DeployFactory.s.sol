@@ -12,7 +12,7 @@ contract DeployFactory is Script {
 
     function run() public {
         // Get USDC address from environment (or use default for Sepolia)
-        address usdcAddress = vm.envOr("USDC_ADDRESS", address(0xAF33ADd7918F685B2A82C1077bd8c07d220FFA04));
+        address usdcAddress = vm.envOr("USDC_ADDRESS", address(0x036CbD53842c5426634e7929541eC2318f3dCF7e));
         
         console.log("=================================");
         console.log("Deploying TicketFactory...");

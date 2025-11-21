@@ -117,7 +117,7 @@ event ResolverRemoved(address indexed resolver);
         post.sellerConfirmed = true;
         
         // Call escrow contract to register confirmation
-        Escrow(post.escrowAddress).PartyConfirmation();
+        Escrow(post.escrowAddress).PartyConfirmation(msg.sender);
     }
 
     function buyerConfirm(uint256 transactionId) external {
@@ -130,7 +130,7 @@ event ResolverRemoved(address indexed resolver);
         post.buyerConfirmed = true;
         
         // Call escrow contract to register confirmation
-        Escrow(post.escrowAddress).PartyConfirmation();
+        Escrow(post.escrowAddress).PartyConfirmation(msg.sender);
         
         // Mark as closed if both parties confirmed
         if (post.sellerConfirmed && post.buyerConfirmed) {

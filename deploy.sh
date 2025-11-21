@@ -27,6 +27,8 @@ else
 fi
 
 # Check if using keystore or private key
+# Expand tilde in KEYSTORE_PATH
+KEYSTORE_PATH="${KEYSTORE_PATH/#\~/$HOME}"
 if [ -n "$KEYSTORE_PATH" ] && [ -f "$KEYSTORE_PATH" ]; then
     echo "🔐 Using keystore deployment..."
     forge script script/DeployFactory.s.sol:DeployFactory \

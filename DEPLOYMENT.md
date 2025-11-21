@@ -43,7 +43,7 @@ cast wallet list
 # Deploy with keystore (will prompt for password)
 forge script script/DeployFactory.s.sol:DeployFactory \
   --rpc-url $SEPOLIA_RPC_URL \
-  --account cheersFinance.eth \
+  --account crowweb3.eth \
   --sender $SENDER_ADDRESS \
   --broadcast
 

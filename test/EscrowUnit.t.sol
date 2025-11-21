@@ -88,7 +88,7 @@ contract EscrowUnitTest is Test {
     function test_PartyConfirmation() public {
         // First confirmation
         vm.prank(factory);
-        escrow.PartyConfirmation();
+        escrow.PartyConfirmation(seller);
         assertFalse(escrow.closed()); // Not closed yet
         
         // Second confirmation - should release funds
@@ -97,7 +97,7 @@ contract EscrowUnitTest is Test {
         uint256 platformBalanceBefore = usdc.balanceOf(platformRevenue);
         
         vm.prank(factory);
-        escrow.PartyConfirmation();
+        escrow.PartyConfirmation(buyer);
         
         assertTrue(escrow.closed());
         
@@ -118,7 +118,7 @@ contract EscrowUnitTest is Test {
     function test_RevertWhen_PartyConfirmationNotFactory() public {
         vm.prank(buyer);
         vm.expectRevert("Please use Factory contract to interact with escrow");
-        escrow.PartyConfirmation(); // Should fail - not factory
+        escrow.PartyConfirmation(buyer); // Should fail - not factory
     }
     
     function test_OpenDispute() public {
@@ -131,8 +131,8 @@ contract EscrowUnitTest is Test {
     function test_RevertWhen_OpenDisputeAfterClosed() public {
         // Close escrow
         vm.startPrank(factory);
-        escrow.PartyConfirmation();
-        escrow.PartyConfirmation();
+        escrow.PartyConfirmation(seller);
+        escrow.PartyConfirmation(buyer);
         
         // Try to open dispute
         vm.expectRevert("Escrow is closed");
@@ -210,7 +210,7 @@ contract EscrowUnitTest is Test {
         vm.startPrank(factory);
         escrow.openDispute();
         vm.expectRevert("Escrow is in dispute");
-        escrow.PartyConfirmation(); // Should fail - disputed
+        escrow.PartyConfirmation(buyer); // Should fail - disputed
         vm.stopPrank();
     }
 }
