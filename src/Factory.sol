@@ -175,6 +175,19 @@ event ResolverRemoved(address indexed resolver);
         post.closed = true;
     }
 
+    function claimTimeout(uint256 transactionId) external {
+        TicketPost storage post = Posts[transactionId];
+        require(post.buyer != address(0), "No buyer yet");
+        require(!post.closed, "Transaction already closed");
+        require(!post.disputed, "Cannot claim timeout during dispute");
+        require(msg.sender == post.seller || msg.sender == post.buyer, "Only buyer or seller can claim");
+        
+        // Call escrow contract to handle timeout claim
+        Escrow(post.escrowAddress).claimTimeout();
+        
+        post.closed = true;
+    }
+
     function displayOpenTickets() external view returns (TicketPost[] memory) {
         TicketPost[] memory openTickets = new TicketPost[](transactionCounter);
         uint256 count = 0;

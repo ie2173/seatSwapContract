@@ -19,8 +19,11 @@ contract Escrow {
     uint256 private confirmations;
     bool public disputed = false;
     bool public closed = false;
+    uint256 public purchaseTimestamp;
+    uint256 public sellerConfirmTimestamp;
 
     uint256 private constant USER_DEPOSIT = 50 * 1e6; // 50 USDC
+    uint256 private constant CONFIRMATION_DEADLINE = 24 hours;
     uint256 private constant PLATFORM_FEE_PERCENT = 3; // 3% fee
     uint256 private constant PER_TICKET_FEE = 125 * 1e4;
     uint256 private constant DISPUTE_FEE_PERCENT = 30;
@@ -49,7 +52,7 @@ contract Escrow {
         ticketPrice = _ticketPrice;
         quantity = _quantity;
         platformRevenue = _platformRevenue;
-
+        purchaseTimestamp = block.timestamp;
     }
 
 
@@ -74,6 +77,11 @@ contract Escrow {
         confirmations++;
         emit TxConfirmed(transactionId, confirmee);
         
+        // Track seller confirmation time for buyer deadline
+        if (confirmations == 1 && confirmee == seller) {
+            sellerConfirmTimestamp = block.timestamp;
+        }
+        
         if (confirmations >= 2) {
             _releaseFunds();
         }
@@ -82,6 +90,40 @@ contract Escrow {
     function openDispute() external requireOpen OnlyFactory {
         disputed = true;
         emit DisputeOpened(transactionId, tx.origin);
+    }
+
+    function claimTimeout() external OnlyFactory {
+        require(!closed, "Escrow is closed");
+        require(!disputed, "Cannot claim timeout during dispute");
+        
+        uint256 contractBalance = USDC.balanceOf(address(this));
+        uint256 ticketTotal = ticketPrice * quantity * 1e6;
+        
+        // Case 1: Seller didn't confirm within 24 hours of purchase
+        if (confirmations == 0 && block.timestamp >= purchaseTimestamp + CONFIRMATION_DEADLINE) {
+            // Buyer wins - gets refund + seller's deposit
+            uint256 buyerAmount = ticketTotal + (USER_DEPOSIT * 2);
+            require(USDC.transfer(buyer, buyerAmount), "Buyer payout failed");
+            closed = true;
+            return;
+        }
+        
+        // Case 2: Seller confirmed but buyer didn't confirm within 24 hours
+        if (confirmations == 1 && sellerConfirmTimestamp > 0 && 
+            block.timestamp >= sellerConfirmTimestamp + CONFIRMATION_DEADLINE) {
+            // Seller wins - gets payment + buyer's deposit
+            uint256 platformFee = (ticketTotal * PLATFORM_FEE_PERCENT) / 100;
+            uint256 perTicketFees = PER_TICKET_FEE * quantity;
+            uint256 sellerAmount = ticketTotal + (USER_DEPOSIT * 2) - platformFee - perTicketFees;
+            uint256 platformAmount = platformFee + perTicketFees;
+            
+            require(USDC.transfer(seller, sellerAmount), "Seller payout failed");
+            require(USDC.transfer(platformRevenue, platformAmount), "Platform fee failed");
+            closed = true;
+            return;
+        }
+        
+        revert("No timeout applicable");
     }
 
     function resolveDispute(address winner) external requireDisputed OnlyFactory {
